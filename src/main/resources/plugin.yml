@@ -1,0 +1,6 @@
+name: StructureStorage
+version: ${project.version}
+main: me.melonboy10.structure.structurestorage.StructureStorage
+api-version: 1.16
+authors: [ melonboy10 ]
+description: A structure storage plugin.
