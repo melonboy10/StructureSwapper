@@ -3,6 +3,8 @@ package me.melonboy10.structure.structurestorage;
 import com.jonahseguin.drink.CommandService;
 import com.jonahseguin.drink.Drink;
 import me.melonboy10.structure.structurestorage.commands.GetBlockCommand;
+import me.melonboy10.structure.structurestorage.swapper.BlockManager;
+import me.melonboy10.structure.structurestorage.swapper.SwapperBlockListener;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,7 +19,8 @@ public final class StructureStorage extends JavaPlugin {
         drink.register(new GetBlockCommand(), "getblock");
         drink.registerCommands();
 
-        this.saveDefaultConfig();
+        registerEvents();
+        new BlockManager(this);
 
         System.out.println(pluginPrefix + "Plugin is loaded!");
     }
@@ -25,5 +28,9 @@ public final class StructureStorage extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+    }
+
+    public void registerEvents() {
+        this.getServer().getPluginManager().registerEvents(new SwapperBlockListener(this), this);
     }
 }

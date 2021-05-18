@@ -1,6 +1,7 @@
 package me.melonboy10.structure.structurestorage.commands;
 
-import com.jonahseguin.drink.annotation.*;
+import com.jonahseguin.drink.annotation.Command;
+import com.jonahseguin.drink.annotation.Sender;
 import me.melonboy10.structure.structurestorage.swapper.BlockManager;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;

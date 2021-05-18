@@ -1,15 +1,30 @@
 package me.melonboy10.structure.structurestorage.swapper;
 
-import me.melonboy10.structure.structurestorage.schematic.Schematic;
 import org.bukkit.util.BoundingBox;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SwapperData {
 
     String name;
-    int id;
     BoundingBox boundingBox;
-    ArrayList<Schematic> structures = new ArrayList<Schematic>();
+
+    public SwapperData(String name, BoundingBox boundingBox) {
+        this.name = name;
+        this.boundingBox = boundingBox;
+    }
+
+//    ArrayList<Schematic> structures = new ArrayList<Schematic>();
+
+    enum LocationModes {CENTER, BOTTOM_LEFT, TOP_RIGHT}
+
+    public HashMap<String, String> serializeData() {
+        HashMap<String, String> map = new HashMap<>();
+
+        map.put("name", name);
+        map.put("bounding_box", boundingBox.toString());
+
+        return map;
+    }
 
 }
