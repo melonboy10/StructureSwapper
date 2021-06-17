@@ -60,7 +60,7 @@ public class SwapperBlockListener implements Listener {
         if (block.getState() instanceof CreatureSpawner) {
             CreatureSpawner blockState = (CreatureSpawner) block.getState();
             if (blockState.getPersistentDataContainer().has(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER)) {
-                event.setCancelled(true);
+//                event.setCancelled(true);
                 SwapperBlock swapperBlock = BlockManager.get(block);
                 if (swapperBlock != null) {
                     BlockManager.remove(block);

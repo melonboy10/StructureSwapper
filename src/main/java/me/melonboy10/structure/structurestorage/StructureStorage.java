@@ -5,6 +5,8 @@ import com.jonahseguin.drink.Drink;
 import me.melonboy10.structure.structurestorage.commands.GetBlockCommand;
 import me.melonboy10.structure.structurestorage.swapper.BlockManager;
 import me.melonboy10.structure.structurestorage.swapper.SwapperBlockListener;
+import me.melonboy10.structure.structurestorage.swapper.SwapperMenu;
+import me.melonboy10.structure.structurestorage.swapper.SwapperMenuListener;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -32,5 +34,6 @@ public final class StructureStorage extends JavaPlugin {
 
     public void registerEvents() {
         this.getServer().getPluginManager().registerEvents(new SwapperBlockListener(this), this);
+        this.getServer().getPluginManager().registerEvents(new SwapperMenuListener(), this);
     }
 }
