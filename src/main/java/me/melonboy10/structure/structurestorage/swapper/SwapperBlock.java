@@ -5,10 +5,13 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MainHand;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -22,13 +25,7 @@ import java.util.*;
 public class SwapperBlock {
 
     StructureStorage plugin;
-
-    Block block;
-    SwapperData data;
-
-    enum ArmorstandTypes {NAME, RELATIVE, BOUNDS, SELECTED_SCHEMATIC}
-    HashMap<ArmorstandTypes, ArmorStand> stands = new HashMap<>();
-
+    enum ArmorstandTypes {NAME, RELATIVE, BOUNDS, SELECTED_SCHEMATIC;}
     enum BoundingDisplayMode {NONE, CORNERS, DOTTED, SOLID;
         public BoundingDisplayMode nextMode() {
             switch(this) {
@@ -43,19 +40,22 @@ public class SwapperBlock {
             }
             return NONE;
         }
+
         public boolean visible() {
             return this == CORNERS || this == DOTTED || this == SOLID;
         }
     }
+
+    Block block;
+    SwapperData data;
+    HashMap<ArmorstandTypes, ArmorStand> stands = new HashMap<>();
     BoundingDisplayMode currentDisplayMode = BoundingDisplayMode.NONE;
-
     ArrayList<ArmorStand> boundingControls = new ArrayList<>();
-
     public boolean controlsVisible;
+
     public boolean advancedDisplay;
 
     BukkitTask runnable;
-
     public SwapperBlock(Block placedBlock, ItemStack item, StructureStorage plugin) {
         this.plugin = plugin;
 
@@ -136,10 +136,6 @@ public class SwapperBlock {
         }
     }
 
-    public SwapperData getData() {
-        return data;
-    }
-
     public void setData(SwapperData data) {
         this.data = data;
     }
@@ -151,6 +147,7 @@ public class SwapperBlock {
     public void breakEvent(BlockBreakEvent event) {
         event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), BlockManager.createNewItem(data));
         stands.forEach((armorstandTypes, armorStand) -> armorStand.remove());
+        boundingControls.forEach(Entity::remove);
         runnable.cancel();
     }
 
@@ -165,31 +162,51 @@ public class SwapperBlock {
 
     public void toggleControls() {
         if (controlsVisible) {
-            boundingControls.forEach(armorStand -> armorStand.remove());
+            boundingControls.forEach(Entity::remove);
         } else {
+            BoundingBox box = data.getBoundingBox();
+            addBoundingControl(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
+            addBoundingControl(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
 
+            addBoundingControl(new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 270, 0));
+            addBoundingControl(new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
         }
         controlsVisible = !controlsVisible;
     }
 
     public void addBoundingControl(Location location) {
-        //summon armor_stand ~ ~ ~ {ShowArms:1b,ArmorItems:[{},{},{},{}],HandItems:[{id:"hopper",Count:1b},{id:"hopper",Count:1b}],Pose:{LeftArm:[1f,180f,137f],RightArm:[0f,180f,221f]}}
-
         ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
         stand.setVisible(false);
-        stand.setGravity(true);
+        stand.setGravity(false);
         stand.setInvulnerable(true);
 
         stand.getEquipment().setItemInMainHand(new ItemStack(Material.HOPPER));
         stand.getEquipment().setItemInOffHand(new ItemStack(Material.HOPPER));
 
-        stand.setRightArmPose(new EulerAngle(0, 180, 221));
-        stand.setLeftArmPose(new EulerAngle(0, 180, 137));
+        stand.addEquipmentLock(EquipmentSlot.HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.OFF_HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.HEAD, ArmorStand.LockType.ADDING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.LEGS, ArmorStand.LockType.ADDING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.FEET, ArmorStand.LockType.ADDING_OR_CHANGING);
 
+        stand.setRotation(location.getYaw(), location.getPitch());
+        stand.setRightArmPose(new EulerAngle(0, Math.toRadians(180), Math.toRadians(332)));
+        stand.setLeftArmPose(new EulerAngle(0, Math.toRadians(180), Math.toRadians(28)));
+
+        stand.getPersistentDataContainer().set(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY, new int[]{block.getX(), block.getY(), block.getZ()});
+
+        boundingControls.add(stand);
     }
 
     public void toggleAdvancedDisplay() {
 
+    }
+
+    public void shrinkSideStand(Entity rightClicked) {
+    }
+
+    public void expandSideStand(Entity rightClicked) {
     }
 
 

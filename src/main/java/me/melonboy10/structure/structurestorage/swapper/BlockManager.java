@@ -2,13 +2,11 @@ package me.melonboy10.structure.structurestorage.swapper;
 
 import me.melonboy10.structure.structurestorage.StructureStorage;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
@@ -16,6 +14,7 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class BlockManager {
 
@@ -89,5 +88,9 @@ public class BlockManager {
 
     public static void remove(Block block) {
         blocks.remove(block);
+    }
+
+    public static Set<Block> getBlocks() {
+        return blocks.keySet();
     }
 }
