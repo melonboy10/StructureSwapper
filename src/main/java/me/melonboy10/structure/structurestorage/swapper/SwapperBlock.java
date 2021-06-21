@@ -1,58 +1,38 @@
 package me.melonboy10.structure.structurestorage.swapper;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import me.melonboy10.structure.structurestorage.StructureStorage;
+import me.melonboy10.structure.structurestorage.utils.ParticleUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.MainHand;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.EulerAngle;
-import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwapperBlock {
 
     StructureStorage plugin;
-    enum ArmorstandTypes {NAME, RELATIVE, BOUNDS, SELECTED_SCHEMATIC;}
-    enum BoundingDisplayMode {NONE, CORNERS, DOTTED, SOLID;
-        public BoundingDisplayMode nextMode() {
-            switch(this) {
-                case NONE:
-                    return CORNERS;
-                case CORNERS:
-                    return DOTTED;
-                case DOTTED:
-                    return SOLID;
-                case SOLID:
-                    return NONE;
-            }
-            return NONE;
-        }
-
-        public boolean visible() {
-            return this == CORNERS || this == DOTTED || this == SOLID;
-        }
-    }
+    enum ArmorstandTypes {NAME, NAME_DIVIDER, MAX_COORDS, MIN_COORDS, BOUNDS, COORD_DIVIDER, SELECTED_SCHEMATIC}
 
     Block block;
     SwapperData data;
     HashMap<ArmorstandTypes, ArmorStand> stands = new HashMap<>();
-    BoundingDisplayMode currentDisplayMode = BoundingDisplayMode.NONE;
-    ArrayList<ArmorStand> boundingControls = new ArrayList<>();
+    BiMap<BlockFace, ArmorStand> boundingControls = HashBiMap.create();
     public boolean controlsVisible;
-
     public boolean advancedDisplay;
 
     BukkitTask runnable;
@@ -69,59 +49,33 @@ public class SwapperBlock {
         blockState.setRequiredPlayerRange(0);
         blockState.update();
 
-        PersistentDataContainer meta = item.getItemMeta().getPersistentDataContainer();
-        String name = meta.get(new NamespacedKey(plugin, "name"), PersistentDataType.STRING);
-        int[] bb = meta.get(new NamespacedKey(plugin, "bounding_box"), PersistentDataType.INTEGER_ARRAY);
-        setData(new SwapperData(name, block.getLocation().toVector(), new BoundingBox(bb[0], bb[1], bb[2], bb[3], bb[4], bb[5])));
+        setData(BlockManager.getDataFromItem(item, block.getLocation()));
 
         runnable = new BukkitRunnable() {
             @Override
             public void run() {
                 BoundingBox box = data.getBoundingBox();
-                switch (currentDisplayMode) {
-                    case DOTTED:
-                        for (int i = 0; i < box.getWidthX(); i++) {
-                            makeParticle(box.getMax().subtract(new Vector(i + 0.5, 0, 0)).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(i + 0.5, box.getHeight(), 0)).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(i + 0.5, 0, box.getWidthZ())).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(i + 0.5, box.getHeight(), box.getWidthZ())).toLocation(block.getWorld()));
-                        }
-                        for (int i = 0; i < box.getWidthZ(); i++) {
-                            makeParticle(box.getMax().subtract(new Vector(0, 0, i + 0.5)).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(0, box.getHeight(), i + 0.5)).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(box.getWidthX(), 0, i + 0.5)).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(box.getWidthX(), box.getHeight(), i + 0.5)).toLocation(block.getWorld()));
-                        }
-                        for (int i = 0; i < box.getHeight(); i++) {
-                            makeParticle(box.getMax().subtract(new Vector(0, i + 0.5, 0)).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(box.getWidthX(), i + 0.5, 0)).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(0, i + 0.5, box.getWidthZ())).toLocation(block.getWorld()));
-                            makeParticle(box.getMax().subtract(new Vector(box.getWidthX(), i + 0.5, box.getWidthZ())).toLocation(block.getWorld()));
-                        }
-                    case CORNERS:
-                        makeParticle(box.getMax().toLocation(block.getWorld()));
-                        makeParticle(box.getMax().subtract(new Vector(box.getWidthX(), 0, 0)).toLocation(block.getWorld()));
-                        makeParticle(box.getMax().subtract(new Vector(0, 0, box.getWidthZ())).toLocation(block.getWorld()));
-                        makeParticle(box.getMax().subtract(new Vector(box.getWidthX(), 0, box.getWidthZ())).toLocation(block.getWorld()));
-
-                        makeParticle(box.getMin().toLocation(block.getWorld()));
-                        makeParticle(box.getMin().add(new Vector(box.getWidthX(), 0, 0)).toLocation(block.getWorld()));
-                        makeParticle(box.getMin().add(new Vector(0, 0, box.getWidthZ())).toLocation(block.getWorld()));
-                        makeParticle(box.getMin().add(new Vector(box.getWidthX(), 0, box.getWidthZ())).toLocation(block.getWorld()));
-                        break;
-                    case SOLID:
-                        break;
-                }
-
+                ParticleUtils.drawBoundingBox(block.getWorld(), box, data.getCurrentDisplayMode(), SwapperData.dyeToColor.get(data.getColor()));
             }
         }.runTaskTimer(plugin, 0, 5);
 
-        addHologram(ArmorstandTypes.NAME, name);
-        addHologram(ArmorstandTypes.RELATIVE, Arrays.toString(bb));
+        setHologram(ArmorstandTypes.NAME, data.getName());
+        setHologram(ArmorstandTypes.BOUNDS, "L: " + data.getBoundingBox().getWidthX() + " W: " + data.getBoundingBox().getWidthZ() + " H: " + data.getBoundingBox().getHeight());
     }
 
-    private void addHologram(ArmorstandTypes type, String text) {
-        ArmorStand nameStand = (ArmorStand) block.getWorld().spawnEntity(block.getLocation().clone().add(0.5, 1 + (0.5 * stands.values().size()), 0.5), EntityType.ARMOR_STAND);
+    private void setHologram(ArmorstandTypes type, String text) {
+
+        if (text.equals("")) {
+            stands.get(type).remove();
+            return;
+        }
+        ArmorStand existingStand = stands.get(type);
+        if (existingStand != null) {
+            existingStand.setCustomName(text);
+            return;
+        }
+
+        ArmorStand nameStand = (ArmorStand) block.getWorld().spawnEntity(block.getLocation().clone().add(0.5, 0.5, 0.5), EntityType.ARMOR_STAND);
         nameStand.setVisible(false);
         nameStand.setCustomName(text);
         nameStand.setCustomNameVisible(true);
@@ -129,11 +83,20 @@ public class SwapperBlock {
 
         stands.putIfAbsent(type, nameStand);
 
-        int i = 0;
-        for (ArmorStand stand : stands.values()) {
-            stand.teleport(block.getLocation().clone().add(0.5, 1 + (0.5 * (stands.values().size() - i - 1)), 0.5));
-            i++;
-        }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                int i = 0;
+
+                for (ArmorstandTypes standType : ArmorstandTypes.values()) {
+                    ArmorStand stand = stands.get(standType);
+                    if (stand != null) {
+                        stand.teleport(block.getLocation().clone().add(0.5, 1 + (0.5 * (stands.values().size() - i - 1)), 0.5));
+                        i++;
+                    }
+                }
+            }
+            }.runTaskLater(plugin, 5);
     }
 
     public void setData(SwapperData data) {
@@ -147,34 +110,32 @@ public class SwapperBlock {
     public void breakEvent(BlockBreakEvent event) {
         event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), BlockManager.createNewItem(data));
         stands.forEach((armorstandTypes, armorStand) -> armorStand.remove());
-        boundingControls.forEach(Entity::remove);
+        boundingControls.forEach((blockFace, armorStand) -> armorStand.remove());
         runnable.cancel();
     }
 
     public void toggleBoundingBox() {
-        currentDisplayMode = currentDisplayMode.nextMode();
-    }
-
-
-    public void makeParticle(Location location) {
-        location.getWorld().spawnParticle(Particle.REDSTONE, location, 1, new Particle.DustOptions(Color.GREEN, 1));
+        data.setCurrentDisplayMode(data.getCurrentDisplayMode().nextMode());
     }
 
     public void toggleControls() {
-        if (controlsVisible) {
-            boundingControls.forEach(Entity::remove);
-        } else {
-            BoundingBox box = data.getBoundingBox();
-            addBoundingControl(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
-            addBoundingControl(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
-
-            addBoundingControl(new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 270, 0));
-            addBoundingControl(new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
-        }
         controlsVisible = !controlsVisible;
+        if (controlsVisible) {
+            BoundingBox box = data.getBoundingBox();
+            addBoundingControl(BlockFace.NORTH, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
+            addBoundingControl(BlockFace.SOUTH, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
+
+            addBoundingControl(BlockFace.WEST, new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 270, 0));
+            addBoundingControl(BlockFace.EAST, new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
+
+//            addBoundingControl(BlockFace.UP, new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
+//            addBoundingControl(BlockFace.DOWN, new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
+        } else {
+            boundingControls.forEach((blockFace, armorStand) -> armorStand.remove());
+        }
     }
 
-    public void addBoundingControl(Location location) {
+    public void addBoundingControl(BlockFace face, Location location) {
         ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
         stand.setVisible(false);
         stand.setGravity(false);
@@ -196,17 +157,88 @@ public class SwapperBlock {
 
         stand.getPersistentDataContainer().set(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY, new int[]{block.getX(), block.getY(), block.getZ()});
 
-        boundingControls.add(stand);
+        boundingControls.put(face.getOppositeFace(), stand);
+    }
+
+    public void updateBoundingControls() {
+        BoundingBox box = data.getBoundingBox();
+        boundingControls.get(BlockFace.SOUTH).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
+        boundingControls.get(BlockFace.NORTH).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
+        boundingControls.get(BlockFace.EAST).teleport(new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 270, 0));
+        boundingControls.get(BlockFace.WEST).teleport(new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
+    }
+
+    public void shrinkSideStand(ArmorStand rightClicked) {
+        BlockFace face = boundingControls.inverse().getOrDefault(rightClicked, null);
+        if (face == null) return;
+
+        BoundingBox cloneBox = data.getBoundingBox().clone();
+        cloneBox.expand(face, -1);
+        if (cloneBox.getWidthX() < 1 || cloneBox.getWidthZ() < 1 || cloneBox.getHeight() < 1) {
+            return;
+        }
+
+        data.getBoundingBox().expand(face, -1);
+        updateBoundingControls();
+    }
+
+    public void expandSideStand(ArmorStand rightClicked) {
+        BlockFace face = boundingControls.inverse().getOrDefault(rightClicked, null);
+        if (face == null) return;
+
+        BoundingBox cloneBox = data.getBoundingBox().clone();
+        cloneBox.expand(face, 1);
+
+        if (cloneBox.getWidthX() < 1 || cloneBox.getWidthZ() < 1 || cloneBox.getHeight() < 1) {
+            return;
+        }
+
+        AtomicBoolean foundBlock = new AtomicBoolean(false);
+        BlockManager.getBlocks().forEach(block1 -> {
+            if (!foundBlock.get() && cloneBox.contains(block1.getLocation().toVector())) {
+                ParticleUtils.drawBoundingBox(block.getWorld(), cloneBox.intersection(new BoundingBox(block1.getX(), block1.getY(), block1.getZ(), block1.getX() + 1, block1.getY() + 1, block1.getZ() + 1)), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
+                foundBlock.set(true);
+            }
+        });
+        if (foundBlock.get()) return;
+
+        AtomicBoolean foundBounds = new AtomicBoolean(false);
+        BlockManager.getBlocks().stream().filter(block1 -> block1 != block).forEach(block1 -> {
+            SwapperBlock block2 = BlockManager.get(block1);
+            if (!foundBounds.get() && cloneBox.overlaps(block2.data.getBoundingBox())) {
+                ParticleUtils.drawBoundingBox(block.getWorld(), cloneBox.intersection(block2.data.getBoundingBox()), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
+                foundBounds.set(true);
+            }
+        });
+        if (foundBounds.get()) return;
+
+        data.getBoundingBox().expand(face, 1);
+        updateBoundingControls();
+    }
+
+    public void toggleColor(boolean back) {
+        if (back) {
+            data.setColor(SwapperData.nextColor.inverse().get(data.getColor()));
+        } else {
+            data.setColor(SwapperData.nextColor.get(data.getColor()));
+        }
     }
 
     public void toggleAdvancedDisplay() {
-
-    }
-
-    public void shrinkSideStand(Entity rightClicked) {
-    }
-
-    public void expandSideStand(Entity rightClicked) {
+        advancedDisplay = !advancedDisplay;
+        if (advancedDisplay) {
+            setHologram(ArmorstandTypes.NAME_DIVIDER,  ChatColor.GRAY + "-------");
+            setHologram(ArmorstandTypes.MAX_COORDS, "Max: " + data.getBoundingBox().getMax());
+            setHologram(ArmorstandTypes.MIN_COORDS, "Min: " + data.getBoundingBox().getMin());
+            setHologram(ArmorstandTypes.BOUNDS, "L: " + data.getBoundingBox().getWidthX() + " W: " + data.getBoundingBox().getWidthZ() + " H: " + data.getBoundingBox().getHeight());
+            setHologram(ArmorstandTypes.COORD_DIVIDER, ChatColor.GRAY + "-------");
+//            setHologram(ArmorstandTypes.SELECTED_SCHEMATIC, data.getSelectedSchematics());
+        } else {
+            setHologram(ArmorstandTypes.NAME_DIVIDER,  "");
+            setHologram(ArmorstandTypes.MAX_COORDS, "");
+            setHologram(ArmorstandTypes.MIN_COORDS, "");
+            setHologram(ArmorstandTypes.COORD_DIVIDER, "");
+        }
     }
 
 

@@ -1,12 +1,12 @@
 package me.melonboy10.structure.structurestorage.swapper;
 
 import me.melonboy10.structure.structurestorage.StructureStorage;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.material.Dye;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
@@ -63,11 +63,22 @@ public class BlockManager {
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER, 1);
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "name"), PersistentDataType.STRING, swapperData.getName());
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "bounding_box"), PersistentDataType.INTEGER_ARRAY, intParseBoundingBox(swapperData.getRelativeBoundingBox()));
+        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "color"), PersistentDataType.STRING, swapperData.getColor().toString());
+        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "display_mode"), PersistentDataType.STRING, swapperData.getCurrentDisplayMode().toString());
 
         item.setItemMeta(meta);
 
-        System.out.println("Giving item");
         return item;
+    }
+
+    public static SwapperData getDataFromItem(ItemStack itemStack, Location location) {
+        PersistentDataContainer meta = itemStack.getItemMeta().getPersistentDataContainer();
+        String name = meta.get(new NamespacedKey(plugin, "name"), PersistentDataType.STRING);
+        int[] bb = meta.get(new NamespacedKey(plugin, "bounding_box"), PersistentDataType.INTEGER_ARRAY);
+        String color = meta.get(new NamespacedKey(plugin, "color"), PersistentDataType.STRING);
+        String displayMode = meta.get(new NamespacedKey(plugin, "display_mode"), PersistentDataType.STRING);
+
+        return new SwapperData(name, location.toVector(), new BoundingBox(bb[0], bb[1], bb[2], bb[3], bb[4], bb[5]), DyeColor.valueOf(color), SwapperData.BoundingDisplayMode.valueOf(displayMode));
     }
 
     private static int[] intParseBoundingBox(BoundingBox boundingBox) {
@@ -75,7 +86,7 @@ public class BlockManager {
     }
 
     public static ItemStack createNewItem() {
-        return createNewItem(new SwapperData("New Structure Swapper", new Vector(0, 0, 0), new BoundingBox(1, 2, 1, 0, 1, 0)));
+        return createNewItem(new SwapperData("New Structure Swapper", new Vector(0, 0, 0), new BoundingBox(1, 2, 1, 0, 1, 0), DyeColor.GREEN, SwapperData.BoundingDisplayMode.NONE));
     }
 
     public static SwapperBlock get(Block block) {

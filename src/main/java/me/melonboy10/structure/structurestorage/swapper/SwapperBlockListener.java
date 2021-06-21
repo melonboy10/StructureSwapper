@@ -1,12 +1,14 @@
 package me.melonboy10.structure.structurestorage.swapper;
 
 import me.melonboy10.structure.structurestorage.StructureStorage;
+import me.melonboy10.structure.structurestorage.utils.ParticleUtils;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.TileState;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -15,9 +17,12 @@ import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwapperBlockListener implements Listener {
 
@@ -34,7 +39,31 @@ public class SwapperBlockListener implements Listener {
         PersistentDataContainer itemData = item.getItemMeta().getPersistentDataContainer();
 
         if (itemData.has(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER)) {
-            new SwapperBlock(block, item, plugin);
+
+            AtomicBoolean foundBound = new AtomicBoolean(false);
+
+            BlockManager.getBlocks().forEach(testedBlock -> {
+                SwapperBlock swapperBlock = BlockManager.get(testedBlock);
+                if (!foundBound.get()) {
+                    if (swapperBlock.data.getBoundingBox().overlaps(block.getBoundingBox())) {
+                        ParticleUtils.drawBoundingBox(block.getWorld(), block.getBoundingBox(), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
+                        foundBound.set(true);
+                    } else {
+                        SwapperData dataFromItem = BlockManager.getDataFromItem(item, block.getLocation());
+                        if (swapperBlock.data.getBoundingBox().overlaps(dataFromItem.getBoundingBox())) {
+                            ParticleUtils.drawBoundingBox(block.getWorld(), dataFromItem.getBoundingBox(), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
+                            foundBound.set(true);
+                        }
+                    }
+                }
+            });
+
+            if (foundBound.get()) {
+                event.setCancelled(true);
+            } else {
+                new SwapperBlock(block, item, plugin);
+            }
+
         }
     }
 
@@ -83,19 +112,18 @@ public class SwapperBlockListener implements Listener {
 
     @EventHandler
     public void onControllerClick(PlayerInteractAtEntityEvent event) {
-        event.getPlayer().sendMessage("Clicked");
-        if (event.getRightClicked().getType().equals(EntityType.ARMOR_STAND)) {
-            event.getPlayer().sendMessage("Clicked Stand");
-            if (event.getRightClicked().getPersistentDataContainer().has(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY)) {
-                event.getPlayer().sendMessage("Clicked Stand with Data");
-                int[] locations = event.getRightClicked().getPersistentDataContainer().get(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY);
-                Location location = new Location(event.getRightClicked().getWorld(), locations[0], locations[1], locations[2]);
+        if (event.getHand().equals(EquipmentSlot.HAND)) {
+            if (event.getRightClicked() instanceof ArmorStand) {
+                if (event.getRightClicked().getPersistentDataContainer().has(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY)) {
+                    int[] locations = event.getRightClicked().getPersistentDataContainer().get(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY);
+                    Location location = new Location(event.getRightClicked().getWorld(), locations[0], locations[1], locations[2]);
 
-                SwapperBlock block = BlockManager.get(BlockManager.getBlocks().stream().filter(block1 -> block1.getLocation().equals(location)).findFirst().get());
-                if (event.getPlayer().isSneaking()) {
-                    block.shrinkSideStand(event.getRightClicked());
-                } else {
-                    block.expandSideStand(event.getRightClicked());
+                    SwapperBlock block = BlockManager.get(BlockManager.getBlocks().stream().filter(block1 -> block1.getLocation().equals(location)).findFirst().get());
+                    if (event.getPlayer().isSneaking()) {
+                        block.shrinkSideStand(((ArmorStand) event.getRightClicked()));
+                    } else {
+                        block.expandSideStand(((ArmorStand) event.getRightClicked()));
+                    }
                 }
             }
         }
