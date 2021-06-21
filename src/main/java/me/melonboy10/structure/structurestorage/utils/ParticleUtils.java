@@ -66,7 +66,7 @@ public class ParticleUtils {
         if (particle.equals(Particle.REDSTONE)) {
             makeParticle(location, color);
         } else {
-            location.getWorld().spawnParticle(particle, location, 1);
+            location.getWorld().spawnParticle(particle, location, 1, 0, 0, 0, 0);
         }
     }
 

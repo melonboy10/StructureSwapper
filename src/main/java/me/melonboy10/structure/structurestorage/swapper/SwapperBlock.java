@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SwapperBlock {
 
     StructureStorage plugin;
+
     enum ArmorstandTypes {NAME, NAME_DIVIDER, MAX_COORDS, MIN_COORDS, BOUNDS, COORD_DIVIDER, SELECTED_SCHEMATIC}
 
     Block block;
@@ -122,14 +123,14 @@ public class SwapperBlock {
         controlsVisible = !controlsVisible;
         if (controlsVisible) {
             BoundingBox box = data.getBoundingBox();
-            addBoundingControl(BlockFace.NORTH, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
-            addBoundingControl(BlockFace.SOUTH, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
+            addBoundingControl(BlockFace.NORTH, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 0.5, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
+            addBoundingControl(BlockFace.SOUTH, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 0.5, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
 
-            addBoundingControl(BlockFace.WEST, new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 270, 0));
-            addBoundingControl(BlockFace.EAST, new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
+            addBoundingControl(BlockFace.WEST, new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 0.5, box.getCenterZ(), 270, 0));
+            addBoundingControl(BlockFace.EAST, new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 0.5, box.getCenterZ(), 90, 0));
 
-//            addBoundingControl(BlockFace.UP, new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
-//            addBoundingControl(BlockFace.DOWN, new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
+            addBoundingControl(BlockFace.DOWN, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() + (box.getHeight() / 2 - 0.8), box.getCenterZ(), 0, 1));
+            addBoundingControl(BlockFace.UP, new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - (box.getHeight() / 2 + 0.6), box.getCenterZ(), 0, 180));
         } else {
             boundingControls.forEach((blockFace, armorStand) -> armorStand.remove());
         }
@@ -139,21 +140,28 @@ public class SwapperBlock {
         ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
         stand.setVisible(false);
         stand.setGravity(false);
+        stand.setSmall(true);
         stand.setInvulnerable(true);
 
-        stand.getEquipment().setItemInMainHand(new ItemStack(Material.HOPPER));
-        stand.getEquipment().setItemInOffHand(new ItemStack(Material.HOPPER));
+        if (location.getPitch() > 0) {
+            stand.getEquipment().setHelmet(new ItemStack(Material.SCAFFOLDING));
 
-        stand.addEquipmentLock(EquipmentSlot.HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
-        stand.addEquipmentLock(EquipmentSlot.OFF_HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
-        stand.addEquipmentLock(EquipmentSlot.HEAD, ArmorStand.LockType.ADDING_OR_CHANGING);
-        stand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
-        stand.addEquipmentLock(EquipmentSlot.LEGS, ArmorStand.LockType.ADDING_OR_CHANGING);
-        stand.addEquipmentLock(EquipmentSlot.FEET, ArmorStand.LockType.ADDING_OR_CHANGING);
+            stand.setHeadPose(new EulerAngle(Math.toRadians(location.getPitch()), 0, 0));
+        } else {
+            stand.getEquipment().setItemInMainHand(new ItemStack(Material.HOPPER));
+            stand.getEquipment().setItemInOffHand(new ItemStack(Material.HOPPER));
 
-        stand.setRotation(location.getYaw(), location.getPitch());
-        stand.setRightArmPose(new EulerAngle(0, Math.toRadians(180), Math.toRadians(332)));
-        stand.setLeftArmPose(new EulerAngle(0, Math.toRadians(180), Math.toRadians(28)));
+            stand.setRotation(location.getYaw(), location.getPitch());
+            stand.setRightArmPose(new EulerAngle(0, Math.toRadians(180), Math.toRadians(332)));
+            stand.setLeftArmPose(new EulerAngle(0, Math.toRadians(180), Math.toRadians(28)));
+        }
+
+            stand.addEquipmentLock(EquipmentSlot.HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
+            stand.addEquipmentLock(EquipmentSlot.OFF_HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
+            stand.addEquipmentLock(EquipmentSlot.HEAD, ArmorStand.LockType.ADDING_OR_CHANGING);
+            stand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
+            stand.addEquipmentLock(EquipmentSlot.LEGS, ArmorStand.LockType.ADDING_OR_CHANGING);
+            stand.addEquipmentLock(EquipmentSlot.FEET, ArmorStand.LockType.ADDING_OR_CHANGING);
 
         stand.getPersistentDataContainer().set(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY, new int[]{block.getX(), block.getY(), block.getZ()});
 
@@ -162,10 +170,14 @@ public class SwapperBlock {
 
     public void updateBoundingControls() {
         BoundingBox box = data.getBoundingBox();
-        boundingControls.get(BlockFace.SOUTH).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
-        boundingControls.get(BlockFace.NORTH).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 1, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
-        boundingControls.get(BlockFace.EAST).teleport(new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 270, 0));
-        boundingControls.get(BlockFace.WEST).teleport(new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 1, box.getCenterZ(), 90, 0));
+        boundingControls.get(BlockFace.UP).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() + (box.getHeight() / 2 - 0.8), box.getCenterZ(), 0, 180));
+        boundingControls.get(BlockFace.DOWN).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - (box.getHeight() / 2 + 0.2), box.getCenterZ(), 0, 1));
+
+        boundingControls.get(BlockFace.SOUTH).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 0.5, box.getCenterZ() + (box.getWidthZ() / 2 + 0.2), 0, 0));
+        boundingControls.get(BlockFace.NORTH).teleport(new Location(block.getWorld(), box.getCenterX(), box.getCenterY() - 0.5, box.getCenterZ() - (box.getWidthZ() / 2 + 0.2), 180, 0));
+        boundingControls.get(BlockFace.EAST).teleport(new Location(block.getWorld(), box.getCenterX() + (box.getWidthX() / 2 + 0.2), box.getCenterY() - 0.5, box.getCenterZ(), 270, 0));
+        boundingControls.get(BlockFace.WEST).teleport(new Location(block.getWorld(), box.getCenterX() - (box.getWidthX() / 2 + 0.2), box.getCenterY() - 0.5, box.getCenterZ(), 90, 0));
+
     }
 
     public void shrinkSideStand(ArmorStand rightClicked) {
@@ -178,6 +190,15 @@ public class SwapperBlock {
             return;
         }
 
+        BoundingBox differenceBox = data.getBoundingBox().clone();
+        switch (face) {
+            case NORTH, SOUTH -> differenceBox.expand(face.getOppositeFace(), -cloneBox.getWidthZ());
+            case EAST, WEST -> differenceBox.expand(face.getOppositeFace(), -cloneBox.getWidthX());
+            case UP, DOWN -> differenceBox.expand(face.getOppositeFace(), -cloneBox.getHeight());
+        }
+        ParticleUtils.drawBoundingBox(block.getWorld(), differenceBox, SwapperData.BoundingDisplayMode.DOTTED, Particle.END_ROD);
+        block.getWorld().playSound(rightClicked.getLocation(), "minecraft:block.wool.break", SoundCategory.BLOCKS, 1, 1);
+
         data.getBoundingBox().expand(face, -1);
         updateBoundingControls();
     }
@@ -189,31 +210,74 @@ public class SwapperBlock {
         BoundingBox cloneBox = data.getBoundingBox().clone();
         cloneBox.expand(face, 1);
 
-        if (cloneBox.getWidthX() < 1 || cloneBox.getWidthZ() < 1 || cloneBox.getHeight() < 1) {
-            return;
+        BoundingBox differenceBox = cloneBox.clone();
+        switch (face) {
+            case NORTH, SOUTH -> differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getWidthZ());
+            case EAST, WEST -> differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getWidthX());
+            case UP, DOWN -> differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getHeight());
+        }
+        ParticleUtils.drawBoundingBox(block.getWorld(), differenceBox, SwapperData.BoundingDisplayMode.DOTTED, Particle.END_ROD);
+        block.getWorld().playSound(rightClicked.getLocation(), "minecraft:block.wool.place", SoundCategory.BLOCKS, 1, 1);
+
+        if (validateBounds(cloneBox)) {
+            data.getBoundingBox().expand(face, 1);
+            updateBoundingControls();
+        }
+    }
+
+    public void shiftTowards(ArmorStand stand) {
+        BlockFace face = boundingControls.inverse().getOrDefault(stand, null);
+        if (face == null) return;
+
+        BoundingBox cloneBox = data.getBoundingBox().clone();
+        cloneBox.shift(face.getDirection());
+
+        if (validateBounds(cloneBox)) {
+            data.getBoundingBox().shift(face.getDirection());
+            block.getWorld().playSound(stand.getLocation(), "minecraft:block.piston.contract", SoundCategory.BLOCKS, 1, 1);
+            updateBoundingControls();
+        }
+    }
+
+    public void shiftAway(ArmorStand stand) {
+        BlockFace face = boundingControls.inverse().getOrDefault(stand, null);
+        if (face == null) return;
+
+        BoundingBox cloneBox = data.getBoundingBox().clone();
+        cloneBox.shift(face.getOppositeFace().getDirection());
+
+        if (validateBounds(cloneBox)) {
+            data.getBoundingBox().shift(face.getOppositeFace().getDirection());
+            block.getWorld().playSound(stand.getLocation(), "minecraft:block.piston.extend", SoundCategory.BLOCKS, 1, 1);
+            updateBoundingControls();
+        }
+    }
+
+    private boolean validateBounds(BoundingBox box) {
+        if (box.getWidthX() < 1 || box.getWidthZ() < 1 || box.getHeight() < 1) {
+            return false;
         }
 
         AtomicBoolean foundBlock = new AtomicBoolean(false);
         BlockManager.getBlocks().forEach(block1 -> {
-            if (!foundBlock.get() && cloneBox.contains(block1.getLocation().toVector())) {
-                ParticleUtils.drawBoundingBox(block.getWorld(), cloneBox.intersection(new BoundingBox(block1.getX(), block1.getY(), block1.getZ(), block1.getX() + 1, block1.getY() + 1, block1.getZ() + 1)), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
+            if (!foundBlock.get() && box.contains(block1.getLocation().toVector())) {
+                ParticleUtils.drawBoundingBox(block.getWorld(), box.intersection(new BoundingBox(block1.getX(), block1.getY(), block1.getZ(), block1.getX() + 1, block1.getY() + 1, block1.getZ() + 1)), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
                 foundBlock.set(true);
             }
         });
-        if (foundBlock.get()) return;
+        if (foundBlock.get()) return false;
 
         AtomicBoolean foundBounds = new AtomicBoolean(false);
         BlockManager.getBlocks().stream().filter(block1 -> block1 != block).forEach(block1 -> {
             SwapperBlock block2 = BlockManager.get(block1);
-            if (!foundBounds.get() && cloneBox.overlaps(block2.data.getBoundingBox())) {
-                ParticleUtils.drawBoundingBox(block.getWorld(), cloneBox.intersection(block2.data.getBoundingBox()), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
+            if (!foundBounds.get() && box.overlaps(block2.data.getBoundingBox())) {
+                ParticleUtils.drawBoundingBox(block.getWorld(), box.intersection(block2.data.getBoundingBox()), SwapperData.BoundingDisplayMode.DOTTED, Color.RED);
                 foundBounds.set(true);
             }
         });
-        if (foundBounds.get()) return;
+        if (foundBounds.get()) return false;
 
-        data.getBoundingBox().expand(face, 1);
-        updateBoundingControls();
+        return true;
     }
 
     public void toggleColor(boolean back) {

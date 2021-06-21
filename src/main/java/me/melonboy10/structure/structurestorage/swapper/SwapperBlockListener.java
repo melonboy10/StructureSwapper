@@ -9,12 +9,15 @@ import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.TileState;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -114,18 +117,47 @@ public class SwapperBlockListener implements Listener {
     public void onControllerClick(PlayerInteractAtEntityEvent event) {
         if (event.getHand().equals(EquipmentSlot.HAND)) {
             if (event.getRightClicked() instanceof ArmorStand) {
-                if (event.getRightClicked().getPersistentDataContainer().has(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY)) {
-                    int[] locations = event.getRightClicked().getPersistentDataContainer().get(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY);
-                    Location location = new Location(event.getRightClicked().getWorld(), locations[0], locations[1], locations[2]);
+                controllerActivate(event.getPlayer(), (ArmorStand) event.getRightClicked(), false);
+            }
+        }
+    }
 
-                    SwapperBlock block = BlockManager.get(BlockManager.getBlocks().stream().filter(block1 -> block1.getLocation().equals(location)).findFirst().get());
-                    if (event.getPlayer().isSneaking()) {
-                        block.shrinkSideStand(((ArmorStand) event.getRightClicked()));
-                    } else {
-                        block.expandSideStand(((ArmorStand) event.getRightClicked()));
-                    }
+    @EventHandler
+    public void onControllerHit(EntityDamageByEntityEvent event) {
+        System.out.println("hit");
+        if (event.getCause().equals(EntityDamageEvent.DamageCause.ENTITY_ATTACK)) {
+            System.out.println("hit2");
+            if (event.getDamager() instanceof Player) {
+                System.out.println("hit3");
+                if (event.getEntity() instanceof ArmorStand) {
+                    System.out.println("hit4");
+                    controllerActivate((Player) event.getDamager(), (ArmorStand) event.getEntity(), true);
                 }
             }
         }
     }
+
+    private void controllerActivate(Player who, ArmorStand entity, boolean hit) {
+        if (entity.getPersistentDataContainer().has(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY)) {
+            int[] locations = entity.getPersistentDataContainer().get(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY);
+            Location location = new Location(entity.getWorld(), locations[0], locations[1], locations[2]);
+
+            SwapperBlock block = BlockManager.get(BlockManager.getBlocks().stream().filter(block1 -> block1.getLocation().equals(location)).findFirst().get());
+            if (who.isSneaking()) {
+                if (hit) {
+                    block.shiftAway(entity);
+                } else {
+                    block.shiftTowards(entity);
+                }
+            } else {
+                if (hit) {
+                    block.shrinkSideStand(entity);
+                } else {
+                    block.expandSideStand(entity);
+                }
+            }
+        }
+    }
+
+
 }
