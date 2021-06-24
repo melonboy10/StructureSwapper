@@ -1,13 +1,17 @@
-package me.melonboy10.structure.structurestorage.swapper;
+package me.melonboy10.swapper.swapper;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import me.melonboy10.structure.structurestorage.StructureStorage;
-import me.melonboy10.structure.structurestorage.utils.ParticleUtils;
+import me.melonboy10.swapper.StructureSwapperPlugin;
+import me.melonboy10.swapper.menuSystem.menus.SwapperMenu;
+import me.melonboy10.swapper.utils.BoundingBoxUtils;
+import me.melonboy10.swapper.utils.ParticleUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.CreatureSpawner;
+import org.bukkit.block.Structure;
+import org.bukkit.block.structure.UsageMode;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -17,40 +21,41 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.BlockVector;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.EulerAngle;
 
-import java.util.*;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwapperBlock {
 
-    StructureStorage plugin;
+    StructureSwapperPlugin plugin;
 
     enum ArmorstandTypes {NAME, NAME_DIVIDER, MAX_COORDS, MIN_COORDS, BOUNDS, COORD_DIVIDER, SELECTED_SCHEMATIC}
 
-    Block block;
-    SwapperData data;
+    public Block block;
+    public SwapperData data;
     HashMap<ArmorstandTypes, ArmorStand> stands = new HashMap<>();
     BiMap<BlockFace, ArmorStand> boundingControls = HashBiMap.create();
     public boolean controlsVisible;
     public boolean advancedDisplay;
-
     BukkitTask runnable;
-    public SwapperBlock(Block placedBlock, ItemStack item, StructureStorage plugin) {
+
+    public SwapperBlock(Block placedBlock, ItemStack item, StructureSwapperPlugin plugin) {
         this.plugin = plugin;
 
         this.block = placedBlock;
         BlockManager.add(block, this);
 
-        CreatureSpawner blockState = (CreatureSpawner) block.getState();
+        setData(BlockManager.getDataFromItem(item, block.getLocation()));
+
+        Structure blockState = (Structure) block.getState();
         blockState.getPersistentDataContainer().set(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER, 1);
-        blockState.setSpawnedType(EntityType.AREA_EFFECT_CLOUD);
-        blockState.setSpawnRange(0);
-        blockState.setRequiredPlayerRange(0);
+        blockState.setUsageMode(UsageMode.values()[RandomUtils.nextInt(4)]);
+        blockState.setBoundingBoxVisible(false);
         blockState.update();
 
-        setData(BlockManager.getDataFromItem(item, block.getLocation()));
 
         runnable = new BukkitRunnable() {
             @Override
@@ -305,5 +310,15 @@ public class SwapperBlock {
         }
     }
 
+    public void pasteSchematic() {
 
+    }
+
+    public void saveSchematic() {
+
+    }
+
+    public void changeSchematic() {
+
+    }
 }

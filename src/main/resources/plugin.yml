@@ -1,6 +1,6 @@
-name: StructureStorage
+name: StructureSwapper
 version: ${project.version}
-main: me.melonboy10.structure.structurestorage.StructureStorage
+main: me.melonboy10.swapper.StructureSwapperPlugin
 api-version: 1.16
 authors: [ melonboy10 ]
-description: A structure storage plugin.
+description: A structure swapper plugin.

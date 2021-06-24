@@ -1,20 +1,18 @@
-package me.melonboy10.structure.structurestorage.swapper;
+package me.melonboy10.swapper.swapper;
 
-import me.melonboy10.structure.structurestorage.StructureStorage;
-import me.melonboy10.structure.structurestorage.utils.ParticleUtils;
+import me.melonboy10.swapper.StructureSwapperPlugin;
+import me.melonboy10.swapper.utils.ParticleUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
-import org.bukkit.block.CreatureSpawner;
-import org.bukkit.block.TileState;
+import org.bukkit.block.Structure;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -29,9 +27,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwapperBlockListener implements Listener {
 
-    StructureStorage plugin;
+    StructureSwapperPlugin plugin;
 
-    public SwapperBlockListener(StructureStorage plugin) {
+    public SwapperBlockListener(StructureSwapperPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -74,8 +72,8 @@ public class SwapperBlockListener implements Listener {
     public void onClick(PlayerInteractEvent event) {
         if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
             Block block = event.getClickedBlock();
-            if (block.getState() instanceof CreatureSpawner) {
-                CreatureSpawner blockState = (CreatureSpawner) block.getState();
+            if (block.getState() instanceof Structure) {
+                Structure blockState = (Structure) block.getState();
                 if (blockState.getPersistentDataContainer().has(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER)) {
                     event.setCancelled(true);
                     SwapperBlock swapperBlock = BlockManager.get(block);
@@ -91,8 +89,8 @@ public class SwapperBlockListener implements Listener {
     public void onBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
 
-        if (block.getState() instanceof CreatureSpawner) {
-            CreatureSpawner blockState = (CreatureSpawner) block.getState();
+        if (block.getState() instanceof Structure) {
+            Structure blockState = (Structure) block.getState();
             if (blockState.getPersistentDataContainer().has(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER)) {
 //                event.setCancelled(true);
                 SwapperBlock swapperBlock = BlockManager.get(block);
@@ -101,15 +99,6 @@ public class SwapperBlockListener implements Listener {
                     swapperBlock.breakEvent(event);
                 }
             }
-        }
-    }
-
-    @EventHandler
-    public void onExplode(BlockExplodeEvent event) {
-        Block block = event.getBlock();
-        if (block.getState() instanceof TileState) {
-            if (((TileState) block.getState()).getPersistentDataContainer().has(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER_ARRAY))
-                event.setCancelled(true);
         }
     }
 

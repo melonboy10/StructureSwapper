@@ -1,11 +1,10 @@
-package me.melonboy10.structure.structurestorage.swapper;
+package me.melonboy10.swapper.swapper;
 
-import me.melonboy10.structure.structurestorage.StructureStorage;
+import me.melonboy10.swapper.StructureSwapperPlugin;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.material.Dye;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
@@ -19,14 +18,14 @@ import java.util.Set;
 public class BlockManager {
 
     private static final HashMap<Block, SwapperBlock> blocks = new HashMap<Block, SwapperBlock>();
-    private static StructureStorage plugin;
+    private static StructureSwapperPlugin plugin;
 
-    public BlockManager(StructureStorage plugin) {
+    public BlockManager(StructureSwapperPlugin plugin) {
         BlockManager.plugin = plugin;
     }
 
     public static ItemStack createNewItem(SwapperData swapperData) {
-        ItemStack item = new ItemStack(Material.SPAWNER);
+        ItemStack item = new ItemStack(Material.STRUCTURE_BLOCK);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.YELLOW + "Structure Swapper");
 
@@ -35,21 +34,21 @@ public class BlockManager {
         lore.add(ChatColor.GRAY + " ");
         lore.add(ChatColor.GRAY + "   +");
         lore.add(ChatColor.DARK_GRAY + "   | " +
-                ChatColor.YELLOW +
-                (swapperData.getBoundingBox().getMaxY() - swapperData.getBoundingBox().getMinY()) +
-                ChatColor.GOLD + "m");
+                 ChatColor.YELLOW +
+                 (swapperData.getBoundingBox().getMaxY() - swapperData.getBoundingBox().getMinY()) +
+                 ChatColor.GOLD + "m");
         lore.add(ChatColor.DARK_GRAY + "   |");
         lore.add(ChatColor.GRAY + "   +" + ChatColor.DARK_GRAY +
-                "--" + ChatColor.YELLOW +
-                (swapperData.getBoundingBox().getMaxX() - swapperData.getBoundingBox().getMinX()) +
-                ChatColor.GOLD +
-                "m" + ChatColor.DARK_GRAY +
-                "--" + ChatColor.GRAY + "+");
+                 "--" + ChatColor.YELLOW +
+                 (swapperData.getBoundingBox().getMaxX() - swapperData.getBoundingBox().getMinX()) +
+                 ChatColor.GOLD +
+                 "m" + ChatColor.DARK_GRAY +
+                 "--" + ChatColor.GRAY + "+");
         lore.add(ChatColor.DARK_GRAY + "  /");
         lore.add(ChatColor.DARK_GRAY + " / " +
-                ChatColor.YELLOW +
-                (swapperData.getBoundingBox().getMaxZ() - swapperData.getBoundingBox().getMinZ()) +
-                ChatColor.GOLD + "m");
+                 ChatColor.YELLOW +
+                 (swapperData.getBoundingBox().getMaxZ() - swapperData.getBoundingBox().getMinZ()) +
+                 ChatColor.GOLD + "m");
         lore.add(ChatColor.GRAY + "+");
         lore.add(ChatColor.GRAY + " ");
         lore.add(ChatColor.YELLOW + "Schematics:");

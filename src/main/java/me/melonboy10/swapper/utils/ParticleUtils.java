@@ -1,7 +1,6 @@
-package me.melonboy10.structure.structurestorage.utils;
+package me.melonboy10.swapper.utils;
 
-import me.melonboy10.structure.structurestorage.swapper.SwapperBlock;
-import me.melonboy10.structure.structurestorage.swapper.SwapperData;
+import me.melonboy10.swapper.swapper.SwapperData;
 import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;

@@ -1,17 +1,13 @@
-package me.melonboy10.structure.structurestorage.swapper;
+package me.melonboy10.swapper.swapper;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import me.melonboy10.structure.structurestorage.StructureStorage;
-import org.bukkit.*;
 import org.bukkit.Color;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.DyeColor;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
-import java.awt.*;
+import java.nio.file.Path;
 import java.util.HashMap;
 
 public class SwapperData {
@@ -34,14 +30,8 @@ public class SwapperData {
         public boolean visible() {
             return this == CORNERS || this == DOTTED || this == SOLID;
         }
+
     }
-
-    private String name;
-    private DyeColor color = DyeColor.LIME;
-    private BoundingBox boundingBox;
-    private final Vector location;
-    private BoundingDisplayMode currentDisplayMode = BoundingDisplayMode.NONE;
-
     public static HashMap<DyeColor, Color> dyeToColor = new HashMap<>() {{
         put(DyeColor.RED,        Color.RED);
         put(DyeColor.ORANGE,     Color.ORANGE);
@@ -79,12 +69,21 @@ public class SwapperData {
         put(DyeColor.BROWN,      DyeColor.RED       );
     }});
 
+    private String name;
+    private DyeColor color;
+    private BoundingBox boundingBox;
+    private final Vector location;
+    private BoundingDisplayMode currentDisplayMode;
+    private Path schematic;
+
     public SwapperData(String name, Vector location, BoundingBox boundingBox, DyeColor color, BoundingDisplayMode displayMode) {
         this.name = name;
         this.location = location;
         this.boundingBox = boundingBox.shift(location);
         this.color = color;
         this.currentDisplayMode = displayMode;
+
+
     }
 
     public String getName() {
@@ -100,11 +99,11 @@ public class SwapperData {
     }
 
     public void setBoundingBox(BoundingBox boundingBox) {
-        this.boundingBox = boundingBox;
+        this.boundingBox = boundingBox.shift(location);
     }
 
     public BoundingBox getRelativeBoundingBox() {
-        return this.boundingBox.shift(location.multiply(-1));
+        return this.boundingBox.clone().shift(location.clone().multiply(-1));
     }
 
     public DyeColor getColor() {
@@ -121,5 +120,13 @@ public class SwapperData {
 
     public void setCurrentDisplayMode(BoundingDisplayMode currentDisplayMode) {
         this.currentDisplayMode = currentDisplayMode;
+    }
+
+    public Path getSchematic() {
+        return schematic;
+    }
+
+    public void setSchematic(Path schematic) {
+        this.schematic = schematic;
     }
 }

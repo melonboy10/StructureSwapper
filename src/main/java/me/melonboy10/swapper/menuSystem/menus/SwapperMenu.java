@@ -1,21 +1,20 @@
-package me.melonboy10.structure.structurestorage.swapper;
+package me.melonboy10.swapper.menuSystem.menus;
 
-import org.bukkit.*;
+import me.melonboy10.swapper.menuSystem.Menu;
+import me.melonboy10.swapper.swapper.SwapperBlock;
+import me.melonboy10.swapper.swapper.SwapperData;
+import org.bukkit.ChatColor;
+import org.bukkit.DyeColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
-public class SwapperMenu implements InventoryHolder {
+public class SwapperMenu extends Menu {
 
-    protected Player player;
-    protected Inventory inventory;
-    protected ItemStack fillerGlass = makeItem(Material.GRAY_STAINED_GLASS_PANE, " ");
     protected SwapperBlock block;
 
     static HashMap<DyeColor, Material> colorToDye = new HashMap<>() {{
@@ -38,43 +37,64 @@ public class SwapperMenu implements InventoryHolder {
     }};
 
     public SwapperMenu(Player player, SwapperBlock swapperBlock) {
-        this.player = player;
+        super(player);
         this.block = swapperBlock;
     }
 
+    @Override
+    public String getMenuName() {
+        return "Structure Swapper Settings";
+    }
+
+    @Override
+    public int getSlots() {
+        return 54;
+    }
+
+    @Override
     public void clickEvent(InventoryClickEvent event) {
+        if (!block.block.getWorld().getBlockAt(block.block.getLocation()).equals(block.block)) {
+            player.closeInventory();
+        }
 
         ItemStack item = event.getCurrentItem();
-        switch (item.getType()) {
-            case PAPER -> System.out.println("paper");
-            case RED_DYE, ORANGE_DYE, YELLOW_DYE, LIME_DYE, GREEN_DYE, LIGHT_BLUE_DYE, BLUE_DYE, CYAN_DYE, PURPLE_DYE, MAGENTA_DYE, PINK_DYE, WHITE_DYE, GRAY_DYE, LIGHT_GRAY_DYE, BLACK_DYE, NAUTILUS_SHELL -> {
-                if (event.getClick().isRightClick()) {
-                    block.toggleColor(true);
-                } else {
-                    block.toggleColor(false);
+        switch (event.getSlot()) {
+            case 30, 31, 32, 33, 34 -> {
+                if (!item.getType().equals(Material.GRAY_STAINED_GLASS_PANE)) {
+
                 }
+            }
+            case 10 -> System.out.println("paper");
+            case 11 -> {
+                block.toggleColor(event.getClick().isRightClick());
                 setMenuItems();
             }
-            case GLASS -> {
+            case 13 -> {
                 block.toggleBoundingBox();
                 setMenuItems();
             }
-            case SCAFFOLDING -> {
+            case 14 -> {
                 block.toggleControls();
                 setMenuItems();
             }
-            case OBSERVER -> {
+            case 16 -> {
                 block.toggleAdvancedDisplay();
                 setMenuItems();
             }
-            case BARRIER -> event.getWhoClicked().closeInventory();
+            case 49 -> player.closeInventory();
         }
     }
 
-    public void setMenuItems() {
-        inventory.setItem(22, makeItem(Material.BARRIER, ChatColor.RED + "Close"));
+    @Override
+    public void closeMenu(InventoryCloseEvent event) {
 
-        inventory.setItem(10, makeItem(Material.PAPER, ChatColor.YELLOW + "Change Name",
+    }
+
+    public void setMenuItems() {
+
+        inventory.setItem(49, makeItem(Material.BARRIER, ChatColor.RED + "Close"));
+
+        inventory.setItem(10, makeItem(Material.NAME_TAG, ChatColor.YELLOW + "Change Name",
                 ChatColor.DARK_GRAY + "Becomes item name",
                 "",
                 ChatColor.AQUA + "Current Name:",
@@ -137,63 +157,39 @@ public class SwapperMenu implements InventoryHolder {
                 ChatColor.YELLOW + "Click to toggle!"
                 ));
 
+        inventory.setItem(28, makeItem(Material.PAPER, ChatColor.YELLOW + "Selected Schematic",
+                ChatColor.DARK_GRAY + "Choose a schematic",
+                "",
+                ChatColor.AQUA + "Current Schematic:",
+                ChatColor.GRAY + (block.data.getSchematic() == null ? "None" : block.data.getSchematic().toString()),
+                "",
+                ChatColor.GRAY + "   +",
+                ChatColor.DARK_GRAY + "   | " +
+                ChatColor.YELLOW +
+                    (block.data.getBoundingBox().getMaxY() - block.data.getBoundingBox().getMinY()) +
+                ChatColor.GOLD + "m",
+                ChatColor.DARK_GRAY + "   |",
+                ChatColor.GRAY + "   +" + ChatColor.DARK_GRAY +
+                    "--" + ChatColor.YELLOW +
+                    (block.data.getBoundingBox().getMaxX() - block.data.getBoundingBox().getMinX()) +
+                    ChatColor.GOLD +
+                    "m" + ChatColor.DARK_GRAY +
+                    "--" + ChatColor.GRAY + "+",
+                ChatColor.DARK_GRAY + "  /",
+                ChatColor.DARK_GRAY + " / " +
+                ChatColor.YELLOW +
+                    (block.data.getBoundingBox().getMaxZ() - block.data.getBoundingBox().getMinZ()) +
+                ChatColor.GOLD + "m",
+                ChatColor.GRAY + "+",
+                ""
+                ));
+
+        inventory.setItem(30, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+        inventory.setItem(31, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+        inventory.setItem(32, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+        inventory.setItem(33, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+        inventory.setItem(34, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+
         setFillerGlass();
-    }
-
-    public void open() {
-        inventory = Bukkit.createInventory(this, 27, "Swapper Block Settings");
-        this.setMenuItems();
-        player.openInventory(inventory);
-    }
-
-    @Override
-    public Inventory getInventory() {
-        return inventory;
-    }
-
-    public void setFillerGlass() {
-        for (int i = 0; i < 27; i++) {
-            if (inventory.getItem(i) == null) {
-                inventory.setItem(i, fillerGlass);
-            }
-        }
-    }
-
-    public static ItemStack makeItem(Material material, String name, String... lore) {
-
-        ItemStack item = new ItemStack(material);
-        ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName(ChatColor.RESET + name);
-
-        itemMeta.setLore(Arrays.asList(lore));
-        item.setItemMeta(itemMeta);
-
-        return item;
-    }
-
-    public static ItemStack makeItem(Material material, int amount, String name, String... lore) {
-
-        ItemStack item = new ItemStack(material);
-        ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName(ChatColor.RESET + name);
-
-        itemMeta.setLore(Arrays.asList(lore));
-        item.setItemMeta(itemMeta);
-        item.setAmount(amount);
-
-        return item;
-    }
-
-    public static ItemStack makeItem(Material material, String name, int amount) {
-
-        ItemStack item = new ItemStack(material);
-        ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName(ChatColor.RESET + name);
-
-        item.setItemMeta(itemMeta);
-
-        item.setAmount(amount);
-
-        return item;
     }
 }
