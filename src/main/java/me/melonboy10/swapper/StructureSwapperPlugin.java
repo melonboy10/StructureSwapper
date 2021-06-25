@@ -6,9 +6,11 @@ import me.melonboy10.swapper.commands.GetBlockCommand;
 import me.melonboy10.swapper.menuSystem.MenuListener;
 import me.melonboy10.swapper.structures.StructureManager;
 import me.melonboy10.swapper.swapper.BlockManager;
+import me.melonboy10.swapper.swapper.SwapperBlock;
 import me.melonboy10.swapper.swapper.SwapperBlockListener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.block.Block;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -34,7 +36,10 @@ public final class StructureSwapperPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        for (Block block : BlockManager.getBlocks()) {
+            SwapperBlock swapperBlock = BlockManager.get(block);
+            swapperBlock.breakEvent();
+        }
     }
 
     public void registerEvents() {

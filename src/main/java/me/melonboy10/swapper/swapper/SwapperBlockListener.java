@@ -96,7 +96,7 @@ public class SwapperBlockListener implements Listener {
                 SwapperBlock swapperBlock = BlockManager.get(block);
                 if (swapperBlock != null) {
                     BlockManager.remove(block);
-                    swapperBlock.breakEvent(event);
+                    swapperBlock.breakEvent();
                 }
             }
         }

@@ -21,8 +21,12 @@ public class StructureManager {
         }
 
         for (File structureFile : structureFiles) {
-            new Structure(structureFile);
+            structures.add(new Structure(structureFile));
         }
+    }
+
+    public static ArrayList<Structure> getStructures() {
+        return structures;
     }
 
     public static void addStructure(Structure structure) {

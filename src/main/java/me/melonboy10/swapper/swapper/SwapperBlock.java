@@ -26,6 +26,7 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.EulerAngle;
 
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwapperBlock {
@@ -67,12 +68,14 @@ public class SwapperBlock {
 
         setHologram(ArmorstandTypes.NAME, data.getName());
         setHologram(ArmorstandTypes.BOUNDS, "L: " + data.getBoundingBox().getWidthX() + " W: " + data.getBoundingBox().getWidthZ() + " H: " + data.getBoundingBox().getHeight());
+        updateHolograms();
     }
 
     private void setHologram(ArmorstandTypes type, String text) {
 
         if (text.equals("")) {
             stands.get(type).remove();
+            stands.remove(type);
             return;
         }
         ArmorStand existingStand = stands.get(type);
@@ -88,7 +91,9 @@ public class SwapperBlock {
         nameStand.setMarker(true);
 
         stands.putIfAbsent(type, nameStand);
+    }
 
+    public void updateHolograms() {
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -102,7 +107,7 @@ public class SwapperBlock {
                     }
                 }
             }
-            }.runTaskLater(plugin, 5);
+        }.runTaskLater(plugin, 5);
     }
 
     public void setData(SwapperData data) {
@@ -113,11 +118,12 @@ public class SwapperBlock {
         new SwapperMenu(event.getPlayer(), this).open();
     }
 
-    public void breakEvent(BlockBreakEvent event) {
-        event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), BlockManager.createNewItem(data));
+    public void breakEvent() {
+        block.getWorld().dropItemNaturally(block.getLocation(), BlockManager.createNewItem(data));
         stands.forEach((armorstandTypes, armorStand) -> armorStand.remove());
         boundingControls.forEach((blockFace, armorStand) -> armorStand.remove());
         runnable.cancel();
+        block.setType(Material.AIR);
     }
 
     public void toggleBoundingBox() {
@@ -308,6 +314,7 @@ public class SwapperBlock {
             setHologram(ArmorstandTypes.MIN_COORDS, "");
             setHologram(ArmorstandTypes.COORD_DIVIDER, "");
         }
+        updateHolograms();
     }
 
     public void pasteSchematic() {

@@ -1,6 +1,8 @@
 package me.melonboy10.swapper.menuSystem.menus;
 
 import me.melonboy10.swapper.menuSystem.Menu;
+import me.melonboy10.swapper.structures.Structure;
+import me.melonboy10.swapper.structures.StructureManager;
 import me.melonboy10.swapper.swapper.SwapperBlock;
 import me.melonboy10.swapper.swapper.SwapperData;
 import org.bukkit.ChatColor;
@@ -11,6 +13,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SwapperMenu extends Menu {
@@ -184,12 +187,39 @@ public class SwapperMenu extends Menu {
                 ""
                 ));
 
-        inventory.setItem(30, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
-        inventory.setItem(31, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
-        inventory.setItem(32, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
-        inventory.setItem(33, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
-        inventory.setItem(34, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+        /*
+         * Schematic listings
+         */
 
+        ArrayList<Structure> structures = StructureManager.getStructures();
+        int size = structures.size() - 1;
+        for (int i = 0; i < 5; i++) {
+
+            if (i > size) {
+                inventory.setItem(30 + i, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+            } else {
+                Structure structure = structures.get(i);
+                inventory.setItem(30 + i, makeItem(structure.getItem(), ""));
+            }
+
+        }
+        
+//        inventory.setItem(30, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+//        inventory.setItem(31, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+//        inventory.setItem(32, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+//        inventory.setItem(33, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+//        inventory.setItem(34, makeItem(Material.WHITE_STAINED_GLASS_PANE, ""));
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         setFillerGlass();
     }
 }
