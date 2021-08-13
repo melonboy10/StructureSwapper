@@ -4,7 +4,8 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import me.melonboy10.swapper.StructureSwapperPlugin;
 import me.melonboy10.swapper.menuSystem.menus.SwapperMenu;
-import me.melonboy10.swapper.utils.BoundingBoxUtils;
+import me.melonboy10.swapper.schematics.Schematic;
+import me.melonboy10.swapper.schematics.SwapperSchematic;
 import me.melonboy10.swapper.utils.ParticleUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.*;
@@ -14,35 +15,33 @@ import org.bukkit.block.Structure;
 import org.bukkit.block.structure.UsageMode;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.BlockVector;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.EulerAngle;
 
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SwapperBlock {
 
     StructureSwapperPlugin plugin;
 
-    enum ArmorstandTypes {NAME, NAME_DIVIDER, MAX_COORDS, MIN_COORDS, BOUNDS, COORD_DIVIDER, SELECTED_SCHEMATIC}
 
+
+    enum ArmorstandTypes {NAME, NAME_DIVIDER, MAX_COORDS, MIN_COORDS, BOUNDS, COORD_DIVIDER, SELECTED_SCHEMATIC;}
     public Block block;
+
     public SwapperData data;
     HashMap<ArmorstandTypes, ArmorStand> stands = new HashMap<>();
     BiMap<BlockFace, ArmorStand> boundingControls = HashBiMap.create();
     public boolean controlsVisible;
     public boolean advancedDisplay;
     BukkitTask runnable;
-
     public SwapperBlock(Block placedBlock, ItemStack item, StructureSwapperPlugin plugin) {
         this.plugin = plugin;
 
@@ -62,7 +61,7 @@ public class SwapperBlock {
             @Override
             public void run() {
                 BoundingBox box = data.getBoundingBox();
-                ParticleUtils.drawBoundingBox(block.getWorld(), box, data.getCurrentDisplayMode(), SwapperData.dyeToColor.get(data.getColor()));
+                ParticleUtils.drawBoundingBox(block.getWorld(), box, data.getDisplayMode(), SwapperData.dyeToColor.get(data.getColor()));
             }
         }.runTaskTimer(plugin, 0, 5);
 
@@ -126,8 +125,13 @@ public class SwapperBlock {
         block.setType(Material.AIR);
     }
 
+    public void togglePlaceMode() {
+        data.setPlaceMode(data.getPlaceMode().nextMode());
+        System.out.println("toggleplace");
+    }
+
     public void toggleBoundingBox() {
-        data.setCurrentDisplayMode(data.getCurrentDisplayMode().nextMode());
+        data.setDisplayMode(data.getDisplayMode().nextMode());
     }
 
     public void toggleControls() {
@@ -167,12 +171,12 @@ public class SwapperBlock {
             stand.setLeftArmPose(new EulerAngle(0, Math.toRadians(180), Math.toRadians(28)));
         }
 
-            stand.addEquipmentLock(EquipmentSlot.HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
-            stand.addEquipmentLock(EquipmentSlot.OFF_HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
-            stand.addEquipmentLock(EquipmentSlot.HEAD, ArmorStand.LockType.ADDING_OR_CHANGING);
-            stand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
-            stand.addEquipmentLock(EquipmentSlot.LEGS, ArmorStand.LockType.ADDING_OR_CHANGING);
-            stand.addEquipmentLock(EquipmentSlot.FEET, ArmorStand.LockType.ADDING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.OFF_HAND, ArmorStand.LockType.REMOVING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.HEAD, ArmorStand.LockType.ADDING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.LEGS, ArmorStand.LockType.ADDING_OR_CHANGING);
+        stand.addEquipmentLock(EquipmentSlot.FEET, ArmorStand.LockType.ADDING_OR_CHANGING);
 
         stand.getPersistentDataContainer().set(new NamespacedKey(plugin, "location"), PersistentDataType.INTEGER_ARRAY, new int[]{block.getX(), block.getY(), block.getZ()});
 
@@ -203,9 +207,18 @@ public class SwapperBlock {
 
         BoundingBox differenceBox = data.getBoundingBox().clone();
         switch (face) {
-            case NORTH, SOUTH -> differenceBox.expand(face.getOppositeFace(), -cloneBox.getWidthZ());
-            case EAST, WEST -> differenceBox.expand(face.getOppositeFace(), -cloneBox.getWidthX());
-            case UP, DOWN -> differenceBox.expand(face.getOppositeFace(), -cloneBox.getHeight());
+            case NORTH:
+            case SOUTH:
+                differenceBox.expand(face.getOppositeFace(), -cloneBox.getWidthZ());
+                break;
+            case EAST:
+            case WEST:
+                differenceBox.expand(face.getOppositeFace(), -cloneBox.getWidthX());
+                break;
+            case UP:
+            case DOWN:
+                differenceBox.expand(face.getOppositeFace(), -cloneBox.getHeight());
+                break;
         }
         ParticleUtils.drawBoundingBox(block.getWorld(), differenceBox, SwapperData.BoundingDisplayMode.DOTTED, Particle.END_ROD);
         block.getWorld().playSound(rightClicked.getLocation(), "minecraft:block.wool.break", SoundCategory.BLOCKS, 1, 1);
@@ -223,9 +236,15 @@ public class SwapperBlock {
 
         BoundingBox differenceBox = cloneBox.clone();
         switch (face) {
-            case NORTH, SOUTH -> differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getWidthZ());
-            case EAST, WEST -> differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getWidthX());
-            case UP, DOWN -> differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getHeight());
+            case NORTH: case SOUTH:
+                differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getWidthZ());
+                break;
+            case EAST: case WEST:
+                differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getWidthX());
+                break;
+            case UP: case DOWN:
+                differenceBox.expand(face.getOppositeFace(), -data.getBoundingBox().getHeight());
+                break;
         }
         ParticleUtils.drawBoundingBox(block.getWorld(), differenceBox, SwapperData.BoundingDisplayMode.DOTTED, Particle.END_ROD);
         block.getWorld().playSound(rightClicked.getLocation(), "minecraft:block.wool.place", SoundCategory.BLOCKS, 1, 1);
@@ -317,15 +336,17 @@ public class SwapperBlock {
         updateHolograms();
     }
 
-    public void pasteSchematic() {
-
+    public void changeSchematic(Schematic schematic) {
+        changeSchematic(data.getSwapperSchematics().getOrDefault(schematic, new SwapperSchematic(schematic)));
     }
 
-    public void saveSchematic() {
+    public void changeSchematic(SwapperSchematic schematic) {
+        if (data.getSwapperSchematic() != null) {
+            data.getSwapperSchematic().save();
+        }
 
-    }
-
-    public void changeSchematic() {
+        data.setSchematic(schematic);
+        schematic.paste(data.getBoundingBox().getMin().toLocation(block.getWorld()));
 
     }
 }

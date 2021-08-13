@@ -1,6 +1,7 @@
 package me.melonboy10.swapper.swapper;
 
 import me.melonboy10.swapper.StructureSwapperPlugin;
+import me.melonboy10.swapper.menuSystem.Menu;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
@@ -10,9 +11,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 public class BlockManager {
@@ -25,45 +24,39 @@ public class BlockManager {
     }
 
     public static ItemStack createNewItem(SwapperData swapperData) {
-        ItemStack item = new ItemStack(Material.STRUCTURE_BLOCK);
+        ItemStack item = Menu.makeItem(Material.STRUCTURE_BLOCK, ChatColor.YELLOW + "Structure Swapper",
+                ChatColor.DARK_GRAY + "Storage Block",
+                "",
+                ChatColor.AQUA + "Dimensions:",
+                ChatColor.GRAY + "   +",
+                ChatColor.DARK_GRAY + "   | " +
+                        ChatColor.YELLOW +
+                        (swapperData.getBoundingBox().getWidthX()) +
+                        ChatColor.GOLD + "m",
+                ChatColor.DARK_GRAY + "   |",
+                ChatColor.GRAY + "   +" + ChatColor.DARK_GRAY + "--" +
+                        ChatColor.YELLOW + (swapperData.getBoundingBox().getHeight()) +
+                        ChatColor.GOLD + "m" + ChatColor.DARK_GRAY + "--" + ChatColor.GRAY + "+",
+                ChatColor.DARK_GRAY + "  /",
+                ChatColor.DARK_GRAY + " / " + ChatColor.YELLOW +
+                        (swapperData.getBoundingBox().getWidthZ()) + ChatColor.GOLD + "m",
+                ChatColor.GRAY + "+",
+                ChatColor.GRAY + " ",
+                ChatColor.AQUA + "Schematics:",
+                ChatColor.DARK_GRAY + " - " + ChatColor.GRAY + "Schem1",
+                ChatColor.DARK_GRAY + " - " + ChatColor.DARK_AQUA + "Schem2",
+                ChatColor.DARK_GRAY + " - " + ChatColor.GRAY + "Schem3",
+                ChatColor.DARK_GRAY + " - " + ChatColor.GRAY + "Schem4"
+        );
+
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.YELLOW + "Structure Swapper");
-
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.DARK_GRAY + "Storage Block");
-        lore.add(ChatColor.GRAY + " ");
-        lore.add(ChatColor.GRAY + "   +");
-        lore.add(ChatColor.DARK_GRAY + "   | " +
-                 ChatColor.YELLOW +
-                 (swapperData.getBoundingBox().getMaxY() - swapperData.getBoundingBox().getMinY()) +
-                 ChatColor.GOLD + "m");
-        lore.add(ChatColor.DARK_GRAY + "   |");
-        lore.add(ChatColor.GRAY + "   +" + ChatColor.DARK_GRAY +
-                 "--" + ChatColor.YELLOW +
-                 (swapperData.getBoundingBox().getMaxX() - swapperData.getBoundingBox().getMinX()) +
-                 ChatColor.GOLD +
-                 "m" + ChatColor.DARK_GRAY +
-                 "--" + ChatColor.GRAY + "+");
-        lore.add(ChatColor.DARK_GRAY + "  /");
-        lore.add(ChatColor.DARK_GRAY + " / " +
-                 ChatColor.YELLOW +
-                 (swapperData.getBoundingBox().getMaxZ() - swapperData.getBoundingBox().getMinZ()) +
-                 ChatColor.GOLD + "m");
-        lore.add(ChatColor.GRAY + "+");
-        lore.add(ChatColor.GRAY + " ");
-        lore.add(ChatColor.YELLOW + "Schematics:");
-        lore.add(ChatColor.DARK_GRAY + " - " + ChatColor.GRAY + "Schem1");
-        lore.add(ChatColor.DARK_GRAY + " - " + ChatColor.AQUA + "Schem2");
-        lore.add(ChatColor.DARK_GRAY + " - " + ChatColor.GRAY + "Schem3");
-        lore.add(ChatColor.DARK_GRAY + " - " + ChatColor.GRAY + "Schem4");
-
-        meta.setLore(lore);
 
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "isSwapperBlock"), PersistentDataType.INTEGER, 1);
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "name"), PersistentDataType.STRING, swapperData.getName());
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "bounding_box"), PersistentDataType.INTEGER_ARRAY, intParseBoundingBox(swapperData.getRelativeBoundingBox()));
         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "color"), PersistentDataType.STRING, swapperData.getColor().toString());
-        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "display_mode"), PersistentDataType.STRING, swapperData.getCurrentDisplayMode().toString());
+        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "display_mode"), PersistentDataType.STRING, swapperData.getDisplayMode().toString());
+        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "place_mode"), PersistentDataType.STRING, swapperData.getPlaceMode().toString());
 
         item.setItemMeta(meta);
 
@@ -76,8 +69,9 @@ public class BlockManager {
         int[] bb = meta.get(new NamespacedKey(plugin, "bounding_box"), PersistentDataType.INTEGER_ARRAY);
         String color = meta.get(new NamespacedKey(plugin, "color"), PersistentDataType.STRING);
         String displayMode = meta.get(new NamespacedKey(plugin, "display_mode"), PersistentDataType.STRING);
+        String placeMode = meta.get(new NamespacedKey(plugin, "place_mode"), PersistentDataType.STRING);
 
-        return new SwapperData(name, location.toVector(), new BoundingBox(bb[0], bb[1], bb[2], bb[3], bb[4], bb[5]), DyeColor.valueOf(color), SwapperData.BoundingDisplayMode.valueOf(displayMode));
+        return new SwapperData(name, location.toVector(), new BoundingBox(bb[0], bb[1], bb[2], bb[3], bb[4], bb[5]), DyeColor.valueOf(color), SwapperData.BoundingDisplayMode.valueOf(displayMode), SwapperData.StructurePlaceMode.valueOf(placeMode));
     }
 
     private static int[] intParseBoundingBox(BoundingBox boundingBox) {
@@ -85,7 +79,7 @@ public class BlockManager {
     }
 
     public static ItemStack createNewItem() {
-        return createNewItem(new SwapperData("New Structure Swapper", new Vector(0, 0, 0), new BoundingBox(1, 2, 1, 0, 1, 0), DyeColor.GREEN, SwapperData.BoundingDisplayMode.NONE));
+        return createNewItem(new SwapperData("New Structure Swapper", new Vector(0, 0, 0), new BoundingBox(1, 2, 1, 0, 1, 0), DyeColor.GREEN, SwapperData.BoundingDisplayMode.NONE, SwapperData.StructurePlaceMode.CENTER));
     }
 
     public static SwapperBlock get(Block block) {

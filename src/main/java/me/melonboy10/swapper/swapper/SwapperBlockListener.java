@@ -70,7 +70,7 @@ public class SwapperBlockListener implements Listener {
 
     @EventHandler
     public void onClick(PlayerInteractEvent event) {
-        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+        if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && !event.getPlayer().isSneaking()) {
             Block block = event.getClickedBlock();
             if (block.getState() instanceof Structure) {
                 Structure blockState = (Structure) block.getState();
@@ -113,13 +113,9 @@ public class SwapperBlockListener implements Listener {
 
     @EventHandler
     public void onControllerHit(EntityDamageByEntityEvent event) {
-        System.out.println("hit");
         if (event.getCause().equals(EntityDamageEvent.DamageCause.ENTITY_ATTACK)) {
-            System.out.println("hit2");
             if (event.getDamager() instanceof Player) {
-                System.out.println("hit3");
                 if (event.getEntity() instanceof ArmorStand) {
-                    System.out.println("hit4");
                     controllerActivate((Player) event.getDamager(), (ArmorStand) event.getEntity(), true);
                 }
             }
